@@ -22,4 +22,22 @@
 
 **AI:** ‏Cursor ‏(Claude Opus 5.5) — תכנון ויצירת קבצי השלב; פירוט ב-`docs/ai/ai_log.md`.
 
+**GitHub:** ‏https://github.com/elgijb/IsraeliHelp
+
+## שלב 2 — מסד נתונים (24.11.2026)
+
+**מה מומש**
+- `database/schema.sql`: מסד הנתונים `IsraeliHelp` ‏(utf8mb4), הטבלאות `users`, `events`, `applications`; מפתחות ראשיים, מפתחות זרים (ON DELETE CASCADE), ‏UNIQUE(user_id, event_id), ‏CHECK (1–500 מתנדבים), סטטוסים מסוג ENUM, אינדקסים.
+- `database/sample_data.sql`: ‏4 משתמשים בדויים, 12 אירועים ב-10 ערים, 8 בקשות.
+- `database/create_user.sql`: משתמש MySQL לאתר עם הרשאות SELECT/INSERT/UPDATE/DELETE בלבד.
+- `db.properties.example` (הקובץ האמיתי עם הסיסמה אינו נשמר ב-Git).
+- `PasswordHasher` ‏(PBKDF2-HMAC-SHA256 עם Salt) + ‏6 בדיקות JUnit; הגיבובים (hashes) בנתוני הדוגמה נוצרו באמצעותו.
+- README: התקנת MySQL ‏(macOS/Windows), יצירת מסד הנתונים, הגדרת החיבור, חשבונות לימוד.
+
+**פקודות עיקריות:** `mysql -u root -p < database/schema.sql`, `mysql -u root -p < database/sample_data.sql`, `./mvnw test`.
+
+**בדיקות:** ‏6/6 בדיקות עברו; בקשה כפולה ← שגיאה 1062; מפתח זר ← 1452; ‏CHECK ← 3819; מחיקה מדורגת (CASCADE) עובדת; משתמש האתר אינו יכול לבצע DROP; הנתונים נשמרים לאחר הפעלה מחדש של MySQL.
+
+**בעיה שנפתרה:** הפקודה `mysql -e "source ..."` אינה עובדת ב-MySQL 26.10 ← ב-README משתמשים ב-`<` (וב-`cmd /c` עבור PowerShell).
+
 </div>

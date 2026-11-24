@@ -1,0 +1,14 @@
+# Пример настроек подключения к MySQL.
+#
+# 1. Скопируйте этот файл в db.properties (в этой же папке):
+#        macOS / Linux:  cp src/main/resources/db.properties.example src/main/resources/db.properties
+#        Windows:        copy src\main\resources\db.properties.example src\main\resources\db.properties
+# 2. Укажите пароль пользователя israelihelp (тот же, что в database/create_user.sql).
+#
+# Файл db.properties НЕ попадает в Git (он указан в .gitignore).
+# Значения также можно задать переменными окружения DB_URL, DB_USER, DB_PASSWORD —
+# они имеют приоритет над этим файлом.
+
+db.url=jdbc:mysql://localhost:3306/IsraeliHelp?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Jerusalem
+db.user=israelihelp
+db.password=change_me

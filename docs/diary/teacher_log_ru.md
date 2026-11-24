@@ -17,3 +17,21 @@
 **Решённая проблема:** дублирование библиотеки JSTL (плагин Jetty уже содержит её) → `scope=provided`.
 
 **AI:** Cursor (Claude Opus 5.5) — план и файлы этапа; подробно в `docs/ai/ai_log.md`.
+
+**GitHub:** https://github.com/elgijb/IsraeliHelp
+
+## Этап 2 — База данных (24.11.2026)
+
+**Реализовано**
+- `database/schema.sql`: база `IsraeliHelp` (utf8mb4), таблицы `users`, `events`, `applications`; PK, FK (ON DELETE CASCADE), UNIQUE(user_id, event_id), CHECK (1–500 волонтёров), ENUM-статусы, индексы.
+- `database/sample_data.sql`: 4 вымышленных пользователя, 12 мероприятий в 10 городах, 8 заявок.
+- `database/create_user.sql`: MySQL-пользователь приложения только с правами SELECT/INSERT/UPDATE/DELETE.
+- `db.properties.example` (настоящий файл с паролем исключён из Git).
+- `PasswordHasher` (PBKDF2-HMAC-SHA256 с солью) + 6 JUnit-тестов; хеши в тестовых данных созданы им.
+- README: установка MySQL (macOS/Windows), создание базы, настройка подключения, учебные аккаунты.
+
+**Основные команды:** `mysql -u root -p < database/schema.sql`, `mysql -u root -p < database/sample_data.sql`, `./mvnw test`.
+
+**Проверка:** 6/6 тестов; повторная заявка → ошибка 1062; FK → 1452; CHECK → 3819; каскадное удаление работает; пользователь приложения не может выполнить DROP; данные сохраняются после перезапуска MySQL.
+
+**Решённая проблема:** `mysql -e "source ..."` не работает в MySQL 26.10 → в README используется `<` (и `cmd /c` для PowerShell).

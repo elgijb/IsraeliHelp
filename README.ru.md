@@ -43,11 +43,70 @@ java -version
 1. Скачать и установить JDK 21+ с сайта https://adoptium.net (при установке отметить «Set JAVA_HOME» и «Add to PATH»).
 2. Открыть новое окно PowerShell и проверить: `java -version`
 
-### 2. Установка MySQL
+### 2. Установка MySQL (версия 8 или новее)
 
-> База данных появится на этапе 2. Здесь будут полные инструкции: создание базы, загрузка тестовых данных, настройка подключения.
+**macOS:**
+```bash
+brew install mysql
+brew services start mysql
+mysql -u root -e "SELECT VERSION();"
+```
+(после установки через Homebrew у root нет пароля — тогда в командах ниже ключ `-p` можно не писать)
 
-### 3. Запуск сайта
+**Windows:**
+1. Скачать MySQL Installer: https://dev.mysql.com/downloads/installer/ → установить «MySQL Server».
+2. При установке задать пароль для root и запомнить его.
+3. Добавить папку `C:\Program Files\MySQL\MySQL Server <версия>\bin` в PATH (или запускать команды из «MySQL Command Line Client»).
+4. Проверить в новом окне PowerShell: `mysql -u root -p -e "SELECT VERSION();"`
+
+### 3. Создание базы данных и загрузка тестовых данных
+
+Из папки проекта:
+
+**macOS / Windows CMD («Командная строка»):**
+```bash
+mysql -u root -p < database/schema.sql
+mysql -u root -p < database/sample_data.sql
+```
+
+**Windows PowerShell** (PowerShell не поддерживает `<`, поэтому команда передаётся в CMD):
+```powershell
+cmd /c "mysql -u root -p < database\schema.sql"
+cmd /c "mysql -u root -p < database\sample_data.sql"
+```
+
+- `schema.sql` — создаёт базу `IsraeliHelp` и таблицы `users`, `events`, `applications`.
+  **Внимание:** если база уже есть, она удаляется и создаётся заново.
+- `sample_data.sql` — 4 вымышленных пользователя, 12 мероприятий, 8 заявок.
+
+### 4. Пользователь MySQL для сайта и настройка подключения
+
+Сайт подключается не как root, а как отдельный пользователь `israelihelp` с правами только на SELECT/INSERT/UPDATE/DELETE в базе `IsraeliHelp`.
+
+1. Откройте `database/create_user.sql` и замените `change_me` на свой пароль. Выполните:
+   ```bash
+   mysql -u root -p < database/create_user.sql                 # macOS / Windows CMD
+   cmd /c "mysql -u root -p < database\create_user.sql"        # Windows PowerShell
+   ```
+2. Создайте файл настроек из примера:
+   ```bash
+   cp src/main/resources/db.properties.example src/main/resources/db.properties      # macOS
+   copy src\main\resources\db.properties.example src\main\resources\db.properties    # Windows
+   ```
+3. В `db.properties` укажите тот же пароль в строке `db.password=`.
+
+`db.properties` не попадает в Git. Вместо файла можно задать переменные окружения `DB_URL`, `DB_USER`, `DB_PASSWORD`.
+
+**Учебные аккаунты** (из `sample_data.sql`, только для демонстрации):
+
+| Логин | Пароль | Роль |
+|---|---|---|
+| `admin` | `Admin123!` | ADMIN |
+| `demo_user` | `Demo123!` | USER |
+| `dana_volunteer` | `Demo123!` | USER |
+| `yossi_volunteer` | `Demo123!` | USER |
+
+### 5. Запуск сайта
 
 Из папки проекта:
 
@@ -64,13 +123,13 @@ mvnw.cmd jetty:run
 При первом запуске Maven скачивает нужные библиотеки (нужен интернет).
 Когда появится строка `Started oejs.Server` — сайт работает.
 
-### 4. Открытие сайта
+### 6. Открытие сайта
 
 Открыть в браузере: **http://localhost:8080**
 
 Остановить сервер: `Ctrl + C` в окне терминала.
 
-### 5. Запуск тестов
+### 7. Запуск тестов
 
 ```bash
 ./mvnw test        # macOS / Linux
@@ -90,13 +149,14 @@ mvnw.cmd test      # Windows
 │   └── config/              настройки (подключение к базе и т.д.)
 ├── src/main/webapp/         JSP-страницы, CSS, JavaScript
 ├── src/test/java/           тесты JUnit
+├── database/                schema.sql, sample_data.sql, create_user.sql
 ├── docs/                    документация, дневники, история AI
 └── CURRENT_STATE.md         текущее состояние проекта
 ```
 
 ## Известные ограничения
 
-- Проект на этапе 1: есть только каркас (проверочная страница). База данных и функции появятся на следующих этапах.
+- Проект на этапе 2: есть каркас и база данных. Сайт пока не подключён к базе — это этап 5.
 - Для первого запуска нужен интернет (скачивание библиотек).
 - Порт 8080 должен быть свободен.
 - Проект рассчитан на запуск через `./mvnw jetty:run`. Библиотека JSTL берётся из плагина Jetty, поэтому для запуска WAR-файла на отдельном Tomcat её нужно добавить в `WEB-INF/lib`.

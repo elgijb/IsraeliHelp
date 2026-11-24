@@ -1,31 +1,36 @@
 # CURRENT_STATE — IsraeliHelp
 
-## Текущее состояние (обновлено: 24.11.2026)
+## Текущее состояние (обновлено: 24.11.2026, после этапа 2)
 
 **Что уже работает**
-- Каркас Maven-проекта (`pom.xml`, упаковка WAR, Java 21+).
-- Maven Wrapper (`mvnw`, `mvnw.cmd`): на другом компьютере достаточно установить только Java.
-- Веб-сервер Jetty 12.1.15 запускается командой `./mvnw jetty:run`, сайт открывается на http://localhost:8080.
-- Проверочная страница: сервлет `HomeServlet` передаёт данные в JSP `home.jsp`, JSTL `<c:out>` работает, UTF-8 (иврит и русский) отображается правильно.
+- Каркас Maven-проекта (WAR, Java 21+), Maven Wrapper, Jetty 12.1.15 (`./mvnw jetty:run` → http://localhost:8080).
+- Проверочная страница `HomeServlet` → `home.jsp` (JSTL, UTF-8).
 - Структура пакетов: `controller`, `service`, `dao`, `model`, `config`.
+- GitHub: https://github.com/elgijb/IsraeliHelp (публичный).
+- База MySQL `IsraeliHelp`: таблицы `users`, `events`, `applications` с PK, FK (ON DELETE CASCADE), UNIQUE(user_id, event_id), CHECK, индексами; utf8mb4.
+- Тестовые данные: 4 вымышленных пользователя, 12 мероприятий в 10 городах, 8 заявок.
+- Отдельный MySQL-пользователь `israelihelp` с правами только SELECT/INSERT/UPDATE/DELETE.
+- `PasswordHasher` (PBKDF2-HMAC-SHA256, соль, 210 000 итераций) + 6 JUnit-тестов.
 
 **Что пока не реализовано**
-- База данных MySQL (этап 2).
-- Дизайн, страницы сайта, переключение языков (этап 3).
-- JavaScript-валидация, CRUD, пользователи, Session/Application, XML/XSD, тесты, портфолио (этапы 4–12).
-- Удалённый репозиторий на GitHub: нужен вход пользователя через `gh auth login`.
+- Дизайн, страницы сайта, переключение языков (этап 3 — сначала предложение дизайна на одобрение).
+- JavaScript-валидация (этап 4), подключение Java к MySQL (этап 5), CRUD, пользователи, Session/Application, XML/XSD, портфолио (этапы 6–12).
+- Картинки мероприятий (`food.jpg` и т.д.) указаны в базе, но сами файлы появятся на этапе 3.
 
 **Известные ошибки и предупреждения**
-- При запуске Jetty выводит 3 предупреждения `The XML schema [...] could not be found` — это внутренние сообщения компилятора JSP (Jasper), на работу сайта не влияют.
+- При запуске Jetty выводит 3 предупреждения `The XML schema [...] could not be found` — внутренние сообщения компилятора JSP, на работу не влияют.
+- Команда `mysql -e "source файл"` в MySQL 26.10 не работает — в README используется перенаправление `<` (и `cmd /c` для PowerShell).
 
 **Следующая задача**
-- Этап 2: `database/schema.sql`, `database/sample_data.sql`, MySQL-пользователь проекта, `db.properties.example`.
+- Этап 3а: предложение дизайн-системы (без изменения файлов), ждать одобрения.
 
 **Последние результаты тестирования (24.11.2026)**
-- `./mvnw clean package` — BUILD SUCCESS, создан `target/israelihelp.war`.
-- `./mvnw jetty:run` — сервер запущен, `GET /` → 200, страница показывает время сервера, версию Java и строку `English · עברית · Русский`.
-- `GET /WEB-INF/views/home.jsp` → 404 (JSP недоступна напрямую — так и задумано).
-- `GET /nope` → 404.
+- `./mvnw test` — 6 тестов, 0 ошибок (PasswordHasherTest).
+- Загрузка `schema.sql` и `sample_data.sql` — без ошибок; 4 / 12 / 8 строк.
+- Повторная заявка → ошибка 1062 (UNIQUE работает); заявка на несуществующее мероприятие → 1452 (FK работает); 0 волонтёров → 3819 (CHECK работает).
+- Удаление мероприятия 1 удаляет его 2 заявки (CASCADE), проверено в транзакции с откатом.
+- Пользователь `israelihelp`: SELECT работает, DROP запрещён (1142).
+- После `brew services restart mysql` данные на месте (4 / 12 / 8).
 
 ---
 
@@ -54,3 +59,37 @@
 **Использование AI:** Cursor (агент, модель Claude Opus 5.5) — план проекта, генерация файлов этапа 1, запуск команд. Подробно: `docs/ai/ai_log.md`.
 
 **Следующий этап:** этап 2 — база данных.
+
+### 24.11.2026 — Этап 1 (дополнение): GitHub
+
+- Выполнен вход `gh auth login` (студент), создан публичный репозиторий командой
+  `gh repo create IsraeliHelp --public --source=. --remote=origin --push`.
+- Первый commit `7bdb435 Initial project structure` отправлен в https://github.com/elgijb/IsraeliHelp.
+
+### 24.11.2026 — Этап 2: база данных
+
+**Задача:** спроектировать таблицы и связи, создать `schema.sql` и `sample_data.sql`, проверить MySQL.
+
+**Что сделано**
+- `database/schema.sql`: база `IsraeliHelp` (utf8mb4), таблицы `users`, `events`, `applications`.
+  PK, FK с `ON DELETE CASCADE`, `UNIQUE(user_id, event_id)`, `UNIQUE` username/email, `CHECK required_volunteers BETWEEN 1 AND 500`,
+  ENUM для ролей и статусов, индексы по city/category/event_date, поле `image` для картинки мероприятия.
+- `database/sample_data.sql`: 4 пользователя (example.com), 12 мероприятий (EN-тексты, коды городов и категорий), 8 заявок разных статусов.
+- `database/create_user.sql`: пользователь `israelihelp` только с CRUD-правами.
+- `src/main/resources/db.properties.example`: шаблон подключения (настоящий `db.properties` в `.gitignore`).
+- `PasswordHasher.java` + `PasswordHasherTest.java` — нужны уже сейчас, чтобы в тестовых данных были настоящие хеши паролей.
+- README (he + ru): установка MySQL на macOS/Windows, создание базы, пользователь, настройка подключения, учебные аккаунты.
+
+**Изменённые файлы:** `database/schema.sql`, `database/sample_data.sql`, `database/create_user.sql`,
+`src/main/resources/db.properties.example`, `src/main/java/il/israelihelp/service/PasswordHasher.java`,
+`src/test/java/il/israelihelp/service/PasswordHasherTest.java`, `README.md`, `README.ru.md`, `CURRENT_STATE.md`, `docs/diary/*`, `docs/ai/ai_log.md`.
+
+**Проблема и решение:** в README сначала была команда `mysql -u root -p -e "source database/schema.sql"`.
+При проверке она дала ошибку 1064 в MySQL 26.10. Заменена на `mysql -u root -p < database/schema.sql`
+(для PowerShell — через `cmd /c`), проверено.
+
+**Тесты:** см. «Последние результаты тестирования» выше — все результаты реальные.
+
+**Использование AI:** Cursor (Claude Opus 5.5) — SQL-скрипты, PasswordHasher, тесты, проверки, документация.
+
+**Следующий этап:** 3а — предложение дизайн-системы.
