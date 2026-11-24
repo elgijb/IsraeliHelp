@@ -108,3 +108,18 @@
 **Проблемы:** конфликт лишних файлов (DemoEventData) — удалены; EL требовал getMessageKey(); JSTL locale через Config.FMT_LOCALE.
 
 **AI:** Cursor (Claude Opus 5.5). Следующий этап: 4 — JavaScript.
+
+### 24.11.2026 — Проверка: всё в GitHub + дневники
+
+**Задача:** убедиться, что код и документация этапов 1–3 сохранены в репозитории и дневники полные.
+
+**Что сделано**
+- Проверено: `main` = `origin/main`, коммитов на GitHub три:
+  1. `7bdb435` Initial project structure
+  2. `54fa47b` Added MySQL database schema and sample data
+  3. `f4672c2` Created homepage and events UI with i18n
+- Расширены дневники этапа 3: `docs/diary/student_diary_ru.md` (подробный разбор), `teacher_log_ru.md`, `teacher_log_he.md`.
+- Репозиторий: https://github.com/elgijb/IsraeliHelp
+- `db.properties` по-прежнему не в Git (проверено).
+
+**Тесты:** `git status` чистый до правки дневников; сайт на localhost:8080 отвечает 200.

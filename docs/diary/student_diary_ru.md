@@ -429,19 +429,98 @@ db.password=change_me
 
 ## Этап 3 — Дизайн и вёрстка (24.11.2026)
 
-### Что смотреть в коде
-- `docs/design/design-system.md` — принятое направление (4 сценария).
-- `css/style.css` + `css/fonts.css` — токены и стили.
-- `controller/LocaleFilter.java` — язык в Session/Cookie + `Config.FMT_LOCALE`.
-- `service/DemoCatalog.java` — временные данные вместо MySQL.
-- JSP в `WEB-INF/views/`: `home.jsp`, `events.jsp`, `event.jsp`, `admin/events.jsp`.
+### 3.1. Что решили по дизайну
 
-### Как работает язык
-1. Нажимаешь EN/עב/RU → `/lang?code=ru`.
-2. LangServlet пишет язык в Session и Cookie.
-3. LocaleFilter на каждом запросе кладёт locale в JSTL.
-4. `<fmt:message key="..."/>` берёт строку из `messages_ru.properties`.
+Сначала был «AI-шаблон» (нумерация 01/02, пилюли городов, одинаковые карточки). По замечанию переделали под **четыре сценария**:
+1. **Главная** — говорит о проблеме (разрозненные просьбы о помощи), справа форма поиска.
+2. **Каталог** — поиск, фильтры слева, список по месяцам с колонкой даты и городом.
+3. **Мероприятие** — большое фото, факты дата/время/город, описание, блок записи справа.
+4. **Админка** — практичная таблица (CRUD подключим позже).
 
-### Практика
-1. Добавь ключ `home.kicker` в три файла перевода и поменяй текст.
-2. В DemoCatalog добавь 13-е мероприятие и проверь, что оно появилось в каталоге.
+Документ: `docs/design/design-system.md`. Авторы фото: `docs/design/photo-credits.md` (Pexels: Unsplash без API-ключа не отдавал картинки).
+
+### 3.2. Файлы этапа — карта
+
+| Файл | Зачем |
+|---|---|
+| `css/fonts.css`, `fonts/*.woff2` | Inter (EN+RU) и Heebo (иврит) **локально** — сайт без интернета |
+| `css/style.css` | CSS-переменные (цвета, отступы) + стили всех страниц |
+| `icons/lucide.svg` | SVG-спрайт иконок (heart, pin, cal, search…) |
+| `img/events/*.jpg` | Картинки категорий для карточек |
+| `i18n/messages.properties` (+ `_he`, `_ru`) | Все тексты интерфейса на 3 языках |
+| `EncodingFilter` | Все запросы/ответы в UTF-8 |
+| `LocaleFilter` | Язык: Session → Cookie → en; `Config.FMT_LOCALE` для JSTL |
+| `LangServlet` `/lang?code=ru` | Переключатель языка, редирект назад |
+| `DemoCatalog` | 12 мероприятий как в `sample_data.sql` (временно без MySQL) |
+| `Event`, `Category`, `City`, `EventStatus` | Модели для страниц |
+| `HomeServlet`, `EventsServlet`, `EventViewServlet`… | Controllers → forward на JSP |
+| `WEB-INF/views/common/header.jsp`, `footer.jsp` | Общая шапка/подвал |
+| `home.jsp`, `events.jsp`, `event.jsp`, `admin/events.jsp`, `login.jsp`, `register.jsp`, `about.jsp` | Страницы |
+
+### 3.3. Как устроена страница (MVC)
+
+```
+Браузер GET /events?city=HAIFA
+    → EncodingFilter (UTF-8)
+    → LocaleFilter (язык)
+    → EventsServlet.doGet
+         читает параметры, вызывает DemoCatalog.filter(...)
+         кладёт данные в request.setAttribute(...)
+         forward → /WEB-INF/views/events.jsp
+    → JSP рисует HTML с <fmt:message> и <c:forEach>
+```
+
+JSP лежит в `WEB-INF` — браузер не откроет её напрямую, только через сервлет.
+
+### 3.4. Как работает язык (подробно)
+
+1. В шапке ссылки EN / עב / RU ведут на `/lang?code=he`.
+2. `LangServlet` сохраняет код в **Session** и в **Cookie** `lang` на год, потом делает redirect на предыдущую страницу.
+3. На **каждом** следующем запросе `LocaleFilter`:
+   - смотрит Session (или Cookie);
+   - ставит `request.setAttribute("lang", …)` и `dir` = `rtl` для иврита;
+   - вызывает `Config.set(..., Config.FMT_LOCALE, locale)` — это говорит JSTL, какой файл перевода брать.
+4. В `header.jsp`: `<fmt:setLocale value="${lang}"/>` и `<fmt:setBundle basename="i18n.messages"/>`.
+5. Везде в разметке: `<fmt:message key="home.title"/>` → строка из `messages_ru.properties` / `_he` / default EN.
+
+**Важно:** названия и описания мероприятий **не** переводятся — админ пишет их на одном языке (сейчас английский в тестовых данных). Переводятся меню, кнопки, города, категории, ошибки.
+
+**Почему `getMessageKey()`?** В JSP выражение `${city.messageKey}` ищет JavaBean-метод `getMessageKey()`. Метод `messageKey()` без `get` EL не видит — из-за этого была ошибка 500, исправили.
+
+### 3.5. DemoCatalog — зачем он
+
+На этапе 3 MySQL ещё не подключён к Java (это этап 5). Чтобы страницы показывали реальные мероприятия:
+- `DemoCatalog` держит тот же набор, что `database/sample_data.sql`;
+- умеет `upcoming`, `filter`, `groupByMonth`, `findById`.
+
+На этапе 5 сервлеты будут вызывать `EventDao` вместо `DemoCatalog`, а JSP почти не изменятся.
+
+### 3.6. Проблемы, которые решили
+
+1. **Лишние файлы** (`DemoEventData`, второй `LocaleFilter` в пакете `filter`) конфликтовали при сборке — удалили.
+2. **JSTL не брал русский**, пока locale не записывали через `Config.FMT_LOCALE` в фильтре (+ API JSTL в `pom.xml` со `scope=provided` для компиляции).
+3. **Динамический ключ** `<fmt:message key="${c.messageKey}"/>` заработал после `getMessageKey()`.
+
+### 3.7. Как проверить самому
+
+```bash
+./mvnw jetty:run
+# открыть http://localhost:8080
+# переключить RU / עב
+# Каталог → фильтр по городу Haifa
+# Открыть мероприятие id=3 (пляж)
+# /admin/events — таблица
+```
+
+### 3.8. Вопросы на защите
+
+- Чем главная отличается от типичного AI-лендинга? (говорит о проблеме, а не «Find a way to help near you» + пилюли)
+- Зачем шрифты лежат в проекте, а не с Google Fonts? (работает офлайн на защите)
+- Как сайт понимает, что нужен иврит справа налево? (`dir="rtl"` + логические CSS-свойства вроде `margin-inline-start`)
+- Почему данные сейчас не из MySQL? (этапность ТЗ: сначала UI, потом JDBC)
+- Где лежат переводы и как добавить новую кнопку на 3 языках?
+
+### 3.9. Практика
+
+1. Поменяй `home.kicker` во всех трёх `messages*.properties` и обнови страницу.
+2. В `DemoCatalog` добавь 13-е мероприятие в Хайфе — оно должно появиться в каталоге и в счётчике города.

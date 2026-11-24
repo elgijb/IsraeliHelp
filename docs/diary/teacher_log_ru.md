@@ -38,8 +38,15 @@
 
 ## Этап 3 — Дизайн и frontend (24.11.2026)
 
-**Реализовано:** одобренная дизайн-система; страницы Home / Catalog / Event / Admin (таблица); i18n EN/HE/RU + RTL; локальные шрифты Inter/Heebo; фото Pexels; DemoCatalog (данные как в sample_data.sql).
+**Реализовано**
+- Дизайн-система под 4 сценария (главная с проблемой, каталог, детальная страница, админ-таблица) — `docs/design/design-system.md`.
+- CSS-токены, Inter + Heebo (локально), Lucide SVG, фото категорий (Pexels).
+- i18n EN / HE (RTL) / RU: `LocaleFilter`, `LangServlet`, `i18n/messages*.properties`.
+- JSP + сервлеты: `/`, `/events`, `/events/view`, `/about`, `/login`, `/register`, `/admin/events`.
+- `DemoCatalog` — временные данные (совпадают с `sample_data.sql`) до JDBC на этапе 5.
 
-**Проверка:** все основные URL → 200; `?lang=ru` / `?lang=he` меняют интерфейс.
+**Команды:** `./mvnw jetty:run` → http://localhost:8080
 
-**Ограничение:** без JDBC (этап 5); админ CRUD и логин — позже.
+**Проверка:** URL → 200; `?lang=ru` / `?lang=he` меняют интерфейс; фильтр `city=HAIFA` работает.
+
+**Ограничения:** без JDBC; CRUD админки и обработка POST логина — этапы 6–7; ивритский UI — AI-перевод.

@@ -44,8 +44,15 @@
 
 ## שלב 3 — עיצוב ו-frontend (24.11.2026)
 
-**מה מומש:** מערכת עיצוב מאושרת; דפי Home / Catalog / Event / Admin; ממשק EN/HE/RU + RTL; גופנים מקומיים; תמונות Pexels; DemoCatalog.
+**מה מומש**
+- מערכת עיצוב ל-4 תרחישים (דף בית עם הבעיה, קטלוג, דף אירוע, טבלת ניהול) — `docs/design/design-system.md`.
+- טוקני CSS, Inter + Heebo (מקומי), Lucide SVG, תמונות Pexels.
+- ממשק EN / HE (RTL) / RU: ‏`LocaleFilter`, ‏`LangServlet`, ‏`i18n/messages*.properties`.
+- JSP + Servlets: `/`, `/events`, `/events/view`, `/about`, `/login`, `/register`, `/admin/events`.
+- `DemoCatalog` — נתונים זמניים (כמו ב-`sample_data.sql`) עד JDBC בשלב 5.
 
-**בדיקות:** כתובות עיקריות ← 200; החלפת שפה עובדת.
+**פקודה:** `./mvnw jetty:run` ← http://localhost:8080
 
-**הגבלה:** עדיין ללא JDBC (שלב 5); CRUD וניהול משתמשים בהמשך.
+**בדיקות:** כתובות ← 200; החלפת שפה עובדת; סינון לפי עיר עובד.
+
+**הגבלות:** ללא JDBC; CRUD ולוגין — שלבים 6–7; תרגום עברית נוצר ב-AI.
