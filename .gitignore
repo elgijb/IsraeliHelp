@@ -1,0 +1,21 @@
+# Результаты сборки Maven (создаются заново командой ./mvnw package)
+target/
+
+# Настоящие параметры подключения к базе данных — НЕ хранить в Git.
+# В репозитории лежит только пример: db.properties.example
+src/main/resources/db.properties
+db.properties
+.env
+
+# Файлы редакторов и IDE
+.idea/
+*.iml
+.vscode/
+.cursor/
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Логи
+*.log

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  web.xml — дескриптор веб-приложения.
+  Сервер читает его при запуске. Сами сервлеты мы регистрируем аннотацией @WebServlet
+  прямо в Java-классах, а здесь храним общие настройки приложения.
+-->
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+    <display-name>IsraeliHelp</display-name>
+
+    <!-- Сессия пользователя автоматически заканчивается после 30 минут бездействия -->
+    <session-config>
+        <session-timeout>30</session-timeout>
+        <cookie-config>
+            <!-- JavaScript не может прочитать cookie сессии: защита от кражи сессии -->
+            <http-only>true</http-only>
+        </cookie-config>
+        <tracking-mode>COOKIE</tracking-mode>
+    </session-config>
+
+    <!-- Все JSP-страницы работают в кодировке UTF-8 (нужно для иврита и русского) -->
+    <jsp-config>
+        <jsp-property-group>
+            <url-pattern>*.jsp</url-pattern>
+            <page-encoding>UTF-8</page-encoding>
+        </jsp-property-group>
+    </jsp-config>
+</web-app>

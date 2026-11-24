@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  pom.xml — главный файл проекта для Maven.
+  Здесь описано: как называется проект, какие библиотеки ему нужны
+  и как его собирать и запускать.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Координаты проекта: группа (обычно перевёрнутый домен), имя и версия -->
+    <groupId>il.israelihelp</groupId>
+    <artifactId>israelihelp</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <!-- war = веб-приложение (Web ARchive), а не обычная программа -->
+    <packaging>war</packaging>
+
+    <name>IsraeliHelp</name>
+    <description>Платформа волонтёрской помощи в Израиле (школьный проект 899373)</description>
+
+    <properties>
+        <!-- Компилируем под Java 21: проект запустится на любой Java начиная с 21 -->
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <jetty.version>12.1.15</jetty.version>
+        <junit.version>6.1.3</junit.version>
+    </properties>
+
+    <dependencies>
+        <!--
+          Servlet API — классы HttpServlet, HttpServletRequest, HttpSession и т.д.
+          scope=provided: библиотеку предоставляет сервер (Jetty), в WAR её класть не нужно.
+        -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--
+          JSTL — теги <c:forEach>, <c:if>, <fmt:message> для JSP-страниц.
+          Это реализация от Glassfish; нужный ей JSTL API (3.0.0) Maven подключит сам.
+          scope=provided: Jetty-плагин уже содержит эту же библиотеку. Если положить
+          вторую копию в приложение, Jetty сканирует её дважды и печатает сотни предупреждений.
+        -->
+        <dependency>
+            <groupId>org.glassfish.web</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- JDBC-драйвер MySQL: позволяет Java подключаться к базе данных MySQL -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>26.10.0</version>
+        </dependency>
+
+        <!-- JUnit — библиотека для автоматических тестов (только для тестов, в сайт не попадает) -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>israelihelp</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.16.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.6.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.5.1</version>
+            </plugin>
+
+            <!--
+              Jetty — веб-сервер, который запускает наше приложение.
+              Команда запуска: ./mvnw jetty:run  (на Windows: mvnw.cmd jetty:run)
+              После этого сайт открывается по адресу http://localhost:8080
+            -->
+            <plugin>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10-maven-plugin</artifactId>
+                <version>${jetty.version}</version>
+                <configuration>
+                    <webApp>
+                        <!-- Сайт открывается в корне: http://localhost:8080/ -->
+                        <contextPath>/</contextPath>
+                    </webApp>
+                    <httpConnector>
+                        <port>8080</port>
+                    </httpConnector>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
