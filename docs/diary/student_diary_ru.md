@@ -424,3 +424,24 @@ db.password=change_me
 
 1. Добавь в `sample_data.sql` 13-е мероприятие в Хайфе, перезагрузи оба скрипта и проверь: `SELECT title FROM events WHERE city = 'HAIFA';`
 2. Попробуй вставить пользователя с уже существующим e-mail — какая будет ошибка и почему?
+
+---
+
+## Этап 3 — Дизайн и вёрстка (24.11.2026)
+
+### Что смотреть в коде
+- `docs/design/design-system.md` — принятое направление (4 сценария).
+- `css/style.css` + `css/fonts.css` — токены и стили.
+- `controller/LocaleFilter.java` — язык в Session/Cookie + `Config.FMT_LOCALE`.
+- `service/DemoCatalog.java` — временные данные вместо MySQL.
+- JSP в `WEB-INF/views/`: `home.jsp`, `events.jsp`, `event.jsp`, `admin/events.jsp`.
+
+### Как работает язык
+1. Нажимаешь EN/עב/RU → `/lang?code=ru`.
+2. LangServlet пишет язык в Session и Cookie.
+3. LocaleFilter на каждом запросе кладёт locale в JSTL.
+4. `<fmt:message key="..."/>` берёт строку из `messages_ru.properties`.
+
+### Практика
+1. Добавь ключ `home.kicker` в три файла перевода и поменяй текст.
+2. В DemoCatalog добавь 13-е мероприятие и проверь, что оно появилось в каталоге.

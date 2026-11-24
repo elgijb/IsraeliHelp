@@ -1,40 +1,40 @@
 # CURRENT_STATE — IsraeliHelp
 
-## Текущее состояние (обновлено: 24.11.2026, после этапа 2)
+## Текущее состояние (обновлено: 24.11.2026, после этапа 3б)
 
 **Что уже работает**
-- Каркас Maven-проекта (WAR, Java 21+), Maven Wrapper, Jetty 12.1.15 (`./mvnw jetty:run` → http://localhost:8080).
-- Проверочная страница `HomeServlet` → `home.jsp` (JSTL, UTF-8).
-- Структура пакетов: `controller`, `service`, `dao`, `model`, `config`.
-- GitHub: https://github.com/elgijb/IsraeliHelp (публичный).
-- База MySQL `IsraeliHelp`: таблицы `users`, `events`, `applications` с PK, FK (ON DELETE CASCADE), UNIQUE(user_id, event_id), CHECK, индексами; utf8mb4.
-- Тестовые данные: 4 вымышленных пользователя, 12 мероприятий в 10 городах, 8 заявок.
-- Отдельный MySQL-пользователь `israelihelp` с правами только SELECT/INSERT/UPDATE/DELETE.
-- `PasswordHasher` (PBKDF2-HMAC-SHA256, соль, 210 000 итераций) + 6 JUnit-тестов.
+- Всё из этапов 1–2 (Maven/Jetty, MySQL schema, PasswordHasher, GitHub).
+- Дизайн-система (одобрена): `docs/design/design-system.md`, локальные шрифты Inter/Heebo, Lucide SVG, CSS-токены.
+- Четыре сценария на JSP: главная (проблема + поиск), каталог (фильтры), страница мероприятия (фото + запись), админ-таблица.
+- i18n EN / HE (RTL) / RU через LocaleFilter + ResourceBundle; переключатель `/lang?code=`.
+- Формы входа и регистрации (внешний вид), страница About.
+- DemoCatalog с данными как в sample_data.sql (без MySQL на этапе 3).
 
 **Что пока не реализовано**
-- Дизайн, страницы сайта, переключение языков (этап 3 — сначала предложение дизайна на одобрение).
-- JavaScript-валидация (этап 4), подключение Java к MySQL (этап 5), CRUD, пользователи, Session/Application, XML/XSD, портфолио (этапы 6–12).
-- Картинки мероприятий (`food.jpg` и т.д.) указаны в базе, но сами файлы появятся на этапе 3.
+- JavaScript-валидация форм (этап 4).
+- Подключение к MySQL через JDBC (этап 5) — сейчас DemoCatalog.
+- CRUD админки, пользователи/Session/заявки, XML/XSD, портфолио (этапы 6–12).
 
 **Известные ошибки и предупреждения**
-- При запуске Jetty выводит 3 предупреждения `The XML schema [...] could not be found` — внутренние сообщения компилятора JSP, на работу не влияют.
-- Команда `mysql -e "source файл"` в MySQL 26.10 не работает — в README используется перенаправление `<` (и `cmd /c` для PowerShell).
+- 3 предупреждения Jasper про XML schema при старте Jetty — без влияния.
+- Ивритские тексты интерфейса переведены AI — нужна проверка носителем.
+- Фото с Pexels (не Unsplash): нужен был API-ключ Unsplash.
+- Кнопка «New event» / удаление в админке пока неактивны (этап 6).
+- POST логина/регистрации ещё не обрабатывается (этап 7).
 
 **Следующая задача**
-- Этап 3а: предложение дизайн-системы (без изменения файлов), ждать одобрения.
+- Этап 4: validation.js, filter.js, confirm.js.
 
 **Последние результаты тестирования (24.11.2026)**
-- `./mvnw test` — 6 тестов, 0 ошибок (PasswordHasherTest).
-- Загрузка `schema.sql` и `sample_data.sql` — без ошибок; 4 / 12 / 8 строк.
-- Повторная заявка → ошибка 1062 (UNIQUE работает); заявка на несуществующее мероприятие → 1452 (FK работает); 0 волонтёров → 3819 (CHECK работает).
-- Удаление мероприятия 1 удаляет его 2 заявки (CASCADE), проверено в транзакции с откатом.
-- Пользователь `israelihelp`: SELECT работает, DROP запрещён (1142).
-- После `brew services restart mysql` данные на месте (4 / 12 / 8).
+- `./mvnw test` — 6/6.
+- `GET /`, `/events`, `/events/view?id=3`, `/about`, `/login`, `/register`, `/admin/events` → 200.
+- `/?lang=ru` — русский заголовок; `/?lang=he` — `dir=rtl` и ивритский заголовок.
+- Фильтр `/events?city=HAIFA` → 200.
 
 ---
 
 ## История работы
+
 
 ### 24.11.2026 — Этап 1: создание проекта
 
@@ -93,3 +93,18 @@
 **Использование AI:** Cursor (Claude Opus 5.5) — SQL-скрипты, PasswordHasher, тесты, проверки, документация.
 
 **Следующий этап:** 3а — предложение дизайн-системы.
+
+### 24.11.2026 — Этап 3а/3б: дизайн и вёрстка
+
+**Задача:** предложение дизайн-системы (одобрено с правкой «не AI-slop, 4 сценария»), затем реализация.
+
+**Что сделано**
+- Макеты 4 экранов, одобрение; сохранено в `docs/design/`.
+- CSS, локальные шрифты, иконки Lucide, фото категорий (Pexels).
+- i18n en/he/ru, LocaleFilter, EncodingFilter, LangServlet.
+- Модели Event/Category/City/EventStatus, DemoCatalog.
+- JSP: home, events, event, about, login, register, admin/events + header/footer.
+
+**Проблемы:** конфликт лишних файлов (DemoEventData) — удалены; EL требовал getMessageKey(); JSTL locale через Config.FMT_LOCALE.
+
+**AI:** Cursor (Claude Opus 5.5). Следующий этап: 4 — JavaScript.

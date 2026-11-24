@@ -42,11 +42,16 @@
         </dependency>
 
         <!--
-          JSTL — теги <c:forEach>, <c:if>, <fmt:message> для JSP-страниц.
-          Это реализация от Glassfish; нужный ей JSTL API (3.0.0) Maven подключит сам.
-          scope=provided: Jetty-плагин уже содержит эту же библиотеку. Если положить
-          вторую копию в приложение, Jetty сканирует её дважды и печатает сотни предупреждений.
+          JSTL API — нужен для компиляции Java-кода (например Config.FMT_LOCALE в LocaleFilter).
+          Реализацию даёт Jetty (scope=provided у implementation), поэтому API тоже provided:
+          в runtime классы уже есть на сервере.
         -->
+        <dependency>
+            <groupId>jakarta.servlet.jsp.jstl</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+            <version>3.0.0</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.glassfish.web</groupId>
             <artifactId>jakarta.servlet.jsp.jstl</artifactId>

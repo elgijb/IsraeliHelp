@@ -11,6 +11,12 @@
 
     <display-name>IsraeliHelp</display-name>
 
+    <!-- Базовое имя файлов перевода: i18n/messages.properties, messages_he.properties, ... -->
+    <context-param>
+        <param-name>jakarta.servlet.jsp.jstl.fmt.localizationContext</param-name>
+        <param-value>i18n.messages</param-value>
+    </context-param>
+
     <!-- Сессия пользователя автоматически заканчивается после 30 минут бездействия -->
     <session-config>
         <session-timeout>30</session-timeout>

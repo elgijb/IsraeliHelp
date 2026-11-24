@@ -1,5 +1,9 @@
 package il.israelihelp.controller;
 
+import il.israelihelp.model.City;
+import il.israelihelp.model.Event;
+import il.israelihelp.service.DateFormats;
+import il.israelihelp.service.DemoCatalog;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -7,38 +11,65 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 /**
- * Главная страница сайта.
- *
- * На этапе 1 это проверочная страница: она показывает, что цепочка
- * "браузер -> Jetty -> Java-сервлет -> JSP -> браузер" работает.
- *
- * Адрес "" означает корень сайта: http://localhost:8080/
+ * Главная страница: проблема, поиск, ближайшие мероприятия, города.
  */
 @WebServlet("")
 public class HomeServlet extends HttpServlet {
 
-    private static final DateTimeFormatter TIME_FORMAT =
-            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
-
-    /**
-     * doGet вызывается сервером, когда браузер делает GET-запрос
-     * (например, пользователь открыл адрес в адресной строке).
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Кладём данные в запрос (request attributes), чтобы JSP могла их показать
-        request.setAttribute("serverTime", LocalDateTime.now().format(TIME_FORMAT));
-        request.setAttribute("javaVersion", System.getProperty("java.version"));
-        request.setAttribute("serverInfo", getServletContext().getServerInfo());
+        Locale locale = (Locale) request.getAttribute("locale");
+        if (locale == null) {
+            locale = Locale.ENGLISH;
+        }
+        ResourceBundle bundle = ResourceBundle.getBundle("i18n.messages", locale);
 
-        // forward — передаём запрос JSP-странице, она сформирует HTML.
-        // JSP лежит в WEB-INF, поэтому браузер не может открыть её напрямую, только через сервлет.
+        List<Map<String, Object>> upcoming = new ArrayList<>();
+        for (Event e : DemoCatalog.upcoming(4)) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("event", e);
+            row.put("dayShort", DateFormats.dayShort(e.getEventDate(), bundle));
+            row.put("dayNum", DateFormats.dayNumber(e.getEventDate()));
+            row.put("monthShort", shortMonth(DateFormats.monthName(e.getEventDate(), bundle), locale));
+            row.put("time", DateFormats.time(e.getEventDate()));
+            upcoming.add(row);
+        }
+
+        Map<City, Long> byCity = DemoCatalog.openCountByCity();
+        // сохраняем порядок городов как в enum
+        List<Map<String, Object>> cities = new ArrayList<>();
+        for (City c : City.values()) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("city", c);
+            row.put("count", byCity.getOrDefault(c, 0L));
+            cities.add(row);
+        }
+
+        request.setAttribute("pageTitle", "Home");
+        request.setAttribute("activeNav", "home");
+        request.setAttribute("openCount", DemoCatalog.openCount());
+        request.setAttribute("upcoming", upcoming);
+        request.setAttribute("cities", cities);
+        request.setAttribute("allCities", City.values());
+        request.setAttribute("categories", il.israelihelp.model.Category.values());
+
         request.getRequestDispatcher("/WEB-INF/views/home.jsp").forward(request, response);
+    }
+
+    private static String shortMonth(String name, Locale locale) {
+        if (locale.getLanguage().equals("he") || locale.getLanguage().equals("ru")) {
+            return name; // не обрезаем — буквы другие
+        }
+        return name.length() <= 3 ? name : name.substring(0, 3);
     }
 }
